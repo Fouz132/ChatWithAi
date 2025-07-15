@@ -36,7 +36,7 @@ if st.button("Ask AI"):
         # Build request
         prompt = f"""{user_input.strip()}
 
-Please reply fully in the same language. Do not mix English unless absolutely needed."""
+Please reply in English only."""
 
         headers = {
             "Authorization": f"Bearer {API_KEY}",
