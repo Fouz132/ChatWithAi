@@ -24,6 +24,9 @@ for i, (role, msg) in enumerate(st.session_state.chat_history):
     if role == "user":
         if st.sidebar.button(f"{i+1}. {msg[:25]}...", key=f"history_{i}"):
             st.session_state.selected_index = i
+            
+if "submitted_by_enter" not in st.session_state:
+    st.session_state["submitted_by_enter"] = False
 
 # --- User Input ---
 user_input = st.text_input("💬 Type your question or prompt")
