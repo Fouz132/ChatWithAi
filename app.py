@@ -63,12 +63,14 @@ if ask_clicked or st.session_state.get("submitted"):
         st.session_state.chat_history.append(("assistant", reply))
 
         # Save history to pickle
+        # Save history to pickle
         with open(HISTORY_FILE, "wb") as f:
             pickle.dump(st.session_state.chat_history, f)
 
-        # Reset input and state
-        st.session_state.user_input = ""
+# Reset input and state safely
         st.session_state.submitted = False
+        st.experimental_rerun()
+
 
 # --- Display only the latest conversation
 if len(st.session_state.chat_history) >= 2:
