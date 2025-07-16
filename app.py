@@ -12,34 +12,46 @@ HISTORY_FILE = "chat_history.pkl"
 st.set_page_config(page_title="Chat with AI", layout="wide")
 st.markdown("<h1 style='text-align:center;'>🤖 Chat with AI (LLaMA 3)</h1><hr>", unsafe_allow_html=True)
 
-# --- Load History from Pickle ---
-if os.path.exists(HISTORY_FILE):
-    with open(HISTORY_FILE, "rb") as f:
-        st.session_state.chat_history = pickle.load(f)
-else:
-    st.session_state.chat_history = []
+# --- Load History ---
+if "chat_history" not in st.session_state:
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, "rb") as f:
+            st.session_state.chat_history = pickle.load(f)
+    else:
+        st.session_state.chat_history = []
 
 if "selected_index" not in st.session_state:
     st.session_state.selected_index = None
+if "user_input" not in st.session_state:
+    st.session_state.user_input = ""
+if "submitted" not in st.session_state:
+    st.session_state.submitted = False
 
-# --- Sidebar: Chat History (Headings only) ---
+# --- Sidebar: Show Headings only ---
 st.sidebar.title("🕘 Chat History")
 for i, (role, msg) in enumerate(st.session_state.chat_history):
     if role == "user":
-        preview = msg.strip().split("\n")[0][:25]
-        if st.sidebar.button(f"{i//2 + 1}. {preview}...", key=f"history_{i}"):
+        heading = msg.strip().split("\n")[0][:25]
+        if st.sidebar.button(f"{i//2 + 1}. {heading}...", key=f"history_{i}"):
             st.session_state.selected_index = i
 
-# --- User Input + Auto-submit on Enter ---
+# --- Input Field with ENTER Key Support ---
 def submit_prompt():
     st.session_state.submitted = True
 
-st.text_input("💬 Type your question or prompt", key="user_input", on_change=submit_prompt)
+st.text_input(
+    "💬 Type your question or prompt",
+    key="user_input",
+    on_change=submit_prompt,
+    value=st.session_state.user_input
+)
+
+# Button Submit
 ask_clicked = st.button("Ask AI")
 
-# --- Ask AI Logic ---
-if ask_clicked or st.session_state.get("submitted"):
-    user_input = st.session_state.get("user_input", "").strip()
+# --- API Call ---
+if ask_clicked or st.session_state.submitted:
+    user_input = st.session_state.user_input.strip()
     if user_input:
         st.session_state.chat_history.append(("user", user_input))
 
@@ -62,17 +74,15 @@ if ask_clicked or st.session_state.get("submitted"):
 
         st.session_state.chat_history.append(("assistant", reply))
 
-        # Save history to pickle
-        # Save history to pickle
+        # Save history
         with open(HISTORY_FILE, "wb") as f:
             pickle.dump(st.session_state.chat_history, f)
 
-# Reset input and state safely
+        # Reset user input cleanly
+        st.session_state.user_input = ""
         st.session_state.submitted = False
-        st.experimental_rerun()
 
-
-# --- Display only the latest conversation
+# --- Display Only the Latest Chat ---
 if len(st.session_state.chat_history) >= 2:
     user_msg = st.session_state.chat_history[-2][1]
     ai_msg = st.session_state.chat_history[-1][1]
@@ -81,7 +91,7 @@ if len(st.session_state.chat_history) >= 2:
     st.chat_message("user").markdown(user_msg)
     st.chat_message("assistant").markdown(ai_msg)
 
-# --- Optional: Selected old conversation from sidebar
+# --- Show old response if selected ---
 if st.session_state.selected_index is not None:
     selected_prompt = st.session_state.chat_history[st.session_state.selected_index][1]
     selected_reply = st.session_state.chat_history[st.session_state.selected_index + 1][1]
